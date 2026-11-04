@@ -1,0 +1,46 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Staff Requests{% endblock %}
+{% block nav_staff %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">Staff Requests</h1>
+    <p class="dashboard-page-subtitle">Review and manage staff requests for your events</p>
+  </div>
+</div>
+<div class="data-section">
+  {% if requests %}
+    {% for req in requests %}
+      <div class="staff-request-card">
+        <div class="avatar avatar-md">{{ req.user.display_name|first }}</div>
+        <div class="staff-request-info" style="flex:1;">
+          <div class="staff-request-name">{{ req.user.display_name }}</div>
+          <div class="staff-request-email">{{ req.user.email }}</div>
+          {% if req.message %}
+            <div class="staff-request-message">"{{ req.message }}"</div>
+          {% endif %}
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">{{ req.created_at|date:"M j, Y" }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          {% if req.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+          {% elif req.status == 'approved' %}<span class="badge badge-success">Approved</span>
+          {% elif req.status == 'rejected' %}<span class="badge badge-gray">Rejected</span>{% endif %}
+          {% if req.status == 'pending' %}
+            <form method="post" action="{% url 'organizers:approve_staff' pk=req.pk %}" style="display:flex;gap:6px;">
+              {% csrf_token %}
+              <button name="action" value="approve" class="btn btn-success btn-sm">✓ Approve</button>
+              <button name="action" value="reject" class="btn btn-secondary btn-sm">✗ Reject</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:60px;">
+      <div class="empty-icon">👥</div>
+      <h3>No staff requests</h3>
+      <p>When people request to work for you, they'll appear here.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

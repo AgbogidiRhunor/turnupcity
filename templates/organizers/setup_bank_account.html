@@ -1,0 +1,87 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Setup Bank Account{% endblock %}
+{% block nav_withdrawals %}active{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">🏦 Bank Account Setup</h1>
+    <p class="dashboard-page-subtitle">Add your bank account to receive withdrawals</p>
+  </div>
+  <a href="{% url 'organizers:withdrawal_dashboard' %}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div style="max-width:580px;">
+
+  {% if bank_account and bank_account.is_verified %}
+  <div class="alert alert-success" style="margin-bottom:24px;">
+    ✓ Current account: <strong>{{ bank_account.account_name }}</strong> — {{ bank_account.bank_name }} (****{{ bank_account.account_number|slice:"-4:" }})
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>Enter Bank Details</h3></div>
+    <div class="card-body card-body-lg">
+      <div class="alert alert-info" style="margin-bottom:24px;">
+        Your account will be instantly verified with Paystack. We never store your full account details insecurely.
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Bank *</label>
+          {% if banks %}
+            <select name="bank_code" id="bank-select" class="form-input" required
+              onchange="document.getElementById('bank-name-hidden').value = this.options[this.selectedIndex].text">
+              <option value="">— Select your bank —</option>
+              {% for bank in banks %}
+                <option value="{{ bank.code }}" {% if bank_account and bank_account.bank_code == bank.code %}selected{% endif %}>
+                  {{ bank.name }}
+                </option>
+              {% endfor %}
+            </select>
+            <input type="hidden" name="bank_name" id="bank-name-hidden" value="{{ bank_account.bank_name|default:'' }}">
+          {% else %}
+            <input type="text" name="bank_code" class="form-input" placeholder="Bank code (e.g. 058 for GTBank)" required>
+            <input type="text" name="bank_name" class="form-input" style="margin-top:8px;" placeholder="Bank name" required>
+            <div class="form-hint">Could not load banks list. Enter manually.</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Number *</label>
+          <input type="text" name="account_number" class="form-input"
+            placeholder="10-digit NUBAN account number"
+            maxlength="10" minlength="10" pattern="[0-9]{10}"
+            value="{{ bank_account.account_number|default:'' }}" required>
+          <div class="form-hint">Enter your 10-digit account number. Paystack will verify and fetch your account name automatically.</div>
+        </div>
+        <div style="background:var(--gray-50);border-radius:var(--radius-lg);padding:16px;margin-bottom:24px;font-size:0.8125rem;color:var(--text-muted);">
+          🔒 Your account details are verified in real-time with Paystack and stored securely. We use this only for withdrawals you initiate.
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Verify &amp; Save Account →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Common Nigerian Banks Quick Reference -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-header"><h3 style="font-size:0.9rem;">Common Bank Codes</h3></div>
+    <div class="card-body" style="font-size:0.8125rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;color:var(--text-muted);">
+        <span>GTBank — 058</span><span>Access Bank — 044</span>
+        <span>Zenith Bank — 057</span><span>First Bank — 011</span>
+        <span>UBA — 033</span><span>Fidelity — 070</span>
+        <span>FCMB — 214</span><span>Sterling — 232</span>
+        <span>Opay — 999992</span><span>Palmpay — 999991</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-update hidden bank name when select changes
+  document.getElementById('bank-select') && document.getElementById('bank-select').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    document.getElementById('bank-name-hidden').value = opt.text;
+  });
+</script>
+{% endblock %}

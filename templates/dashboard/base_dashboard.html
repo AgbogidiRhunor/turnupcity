@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="dashboard-sidebar" id="dashboard-sidebar" role="navigation" aria-label="Dashboard navigation">
+    <div class="sidebar-header">
+      {% if organizer %}
+        <div class="sidebar-org-name">{{ organizer.organization_name }}</div>
+        <div class="sidebar-org-status">
+          {% if organizer.is_verified %}
+            <span class="badge badge-success">✓ Verified</span>
+          {% else %}
+            <span class="badge badge-warning">⏳ Pending</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="sidebar-org-name">{{ user.display_name }}</div>
+        <div class="sidebar-org-status">
+          <span class="badge badge-gray">{{ user.get_role_display }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <a href="{% url 'organizers:dashboard' %}" class="sidebar-link {% block nav_overview %}{% endblock %}">
+        <span class="sidebar-icon">🏠</span> Overview
+      </a>
+      <a href="{% url 'analytics:dashboard' %}" class="sidebar-link {% block nav_analytics %}{% endblock %}">
+        <span class="sidebar-icon">📊</span> Analytics
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Events</div>
+      <a href="{% url 'events:create' %}" class="sidebar-link {% block nav_create_event %}{% endblock %}">
+        <span class="sidebar-icon">➕</span> Create Event
+      </a>
+      <a href="{% url 'organizers:dashboard' %}" class="sidebar-link {% block nav_my_events %}{% endblock %}">
+        <span class="sidebar-icon">🎪</span> My Events
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Sales</div>
+      <a href="{% url 'orders:organizer_orders' %}" class="sidebar-link {% block nav_orders %}{% endblock %}">
+        <span class="sidebar-icon">📦</span> Orders
+      </a>
+      <a href="{% url 'refunds:organizer_list' %}" class="sidebar-link {% block nav_refunds %}{% endblock %}">
+        <span class="sidebar-icon">💸</span> Refunds
+        {% if pending_refund_count %}
+          <span class="sidebar-badge">{{ pending_refund_count }}</span>
+        {% endif %}
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Team</div>
+      <a href="{% url 'organizers:staff_requests' %}" class="sidebar-link {% block nav_staff %}{% endblock %}">
+        <span class="sidebar-icon">👥</span> Staff Requests
+        {% if pending_staff_count %}
+          <span class="sidebar-badge">{{ pending_staff_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'messaging:inbox' %}" class="sidebar-link {% block nav_messages %}{% endblock %}">
+        <span class="sidebar-icon">💬</span> Messages
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Check-In</div>
+      <a href="{% url 'checkin:select_event' %}" class="sidebar-link {% block nav_checkin %}{% endblock %}">
+        <span class="sidebar-icon">📷</span> Scanner
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Finance</div>
+      <a href="{% url 'organizers:withdrawal_dashboard' %}" class="sidebar-link {% block nav_withdrawals %}{% endblock %}">
+        <span class="sidebar-icon">🏦</span> Withdrawals
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="{% url 'organizers:edit' %}" class="sidebar-link">
+        <span class="sidebar-icon">⚙️</span> Settings
+      </a>
+      <a href="{% url 'home' %}" class="sidebar-link">
+        <span class="sidebar-icon">← </span> Back to Site
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="dashboard-main">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-controls="dashboard-sidebar">
+      ☰ Menu
+    </button>
+    {% block dashboard_content %}{% endblock %}
+  </div>
+
+</div>
+{% endblock %}

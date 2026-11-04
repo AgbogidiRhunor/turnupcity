@@ -1,0 +1,144 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Organizer Dashboard{% endblock %}
+{% block nav_overview %}active{% endblock %}
+{% block dashboard_content %}
+
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">Welcome back, {{ user.first_name|default:user.display_name }} 👋</h1>
+    <p class="dashboard-page-subtitle">{{ organizer.organization_name }} · {% if organizer.is_verified %}<span style="color:var(--color-success);">✓ Verified</span>{% else %}<span style="color:var(--color-warning);">Verification pending</span>{% endif %}</p>
+  </div>
+  <a href="{% url 'events:create' %}" class="btn btn-primary">+ Create Event</a>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid" style="margin-bottom:32px;">
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-icon stat-icon-brand">🎪</div>
+    </div>
+    <div class="stat-card-label">Total Events</div>
+    <div class="stat-card-value">{{ events.count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-icon stat-icon-success">🎫</div>
+    </div>
+    <div class="stat-card-label">Tickets Sold</div>
+    <div class="stat-card-value">{{ total_tickets }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-icon stat-icon-warning">💰</div>
+    </div>
+    <div class="stat-card-label">Total Revenue</div>
+    <div class="stat-card-value">${{ total_revenue|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-icon stat-icon-info">👥</div>
+    </div>
+    <div class="stat-card-label">Staff Members</div>
+    <div class="stat-card-value">{{ staff_members.count }}</div>
+  </div>
+</div>
+
+<div class="two-col-layout">
+  <div>
+    <!-- EVENTS LIST -->
+    <div class="data-section" style="margin-bottom:24px;">
+      <div class="data-section-header">
+        <h3 class="data-section-title">Your Events</h3>
+        <a href="{% url 'events:create' %}" class="btn btn-primary btn-sm">+ New Event</a>
+      </div>
+      {% if events %}
+        {% for event in events %}
+          <div class="event-list-item">
+            <div class="event-list-thumbnail">
+              {% if event.banner %}
+                <img src="{{ event.banner.url }}" alt="{{ event.title }}">
+              {% else %}
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,var(--color-brand-light),#e9d5ff);display:flex;align-items:center;justify-content:center;font-size:1.25rem;">🎪</div>
+              {% endif %}
+            </div>
+            <div class="event-list-info">
+              <div class="event-list-title">{{ event.title }}</div>
+              <div class="event-list-meta">{{ event.start_date|date:"M j, Y" }} · {{ event.city }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+              {% if event.status == 'published' %}<span class="badge badge-success">Live</span>
+              {% elif event.status == 'draft' %}<span class="badge badge-warning">Draft</span>
+              {% elif event.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+              <a href="{% url 'events:manage' slug=event.slug %}" class="btn btn-ghost btn-sm">Manage →</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state" style="padding:48px;">
+          <div class="empty-icon">🎪</div>
+          <h3>No events yet</h3>
+          <p>Create your first event to start selling tickets.</p>
+          <a href="{% url 'events:create' %}" class="btn btn-primary">Create Event</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <!-- PENDING STAFF REQUESTS -->
+    <div class="data-section" style="margin-bottom:16px;">
+      <div class="data-section-header">
+        <h3 class="data-section-title">Staff Requests</h3>
+        {% if pending_staff %}
+          <span class="badge badge-warning">{{ pending_staff.count }} pending</span>
+        {% endif %}
+      </div>
+      {% if pending_staff %}
+        {% for req in pending_staff %}
+          <div class="staff-request-card">
+            <div class="avatar avatar-sm">{{ req.user.display_name|first }}</div>
+            <div class="staff-request-info">
+              <div class="staff-request-name">{{ req.user.display_name }}</div>
+              <div class="staff-request-email">{{ req.user.email }}</div>
+              {% if req.message %}
+                <div class="staff-request-message">"{{ req.message|truncatewords:15 }}"</div>
+              {% endif %}
+            </div>
+            <form method="post" action="{% url 'organizers:approve_staff' pk=req.pk %}" class="staff-request-actions">
+              {% csrf_token %}
+              <button name="action" value="approve" class="btn btn-success btn-sm">✓</button>
+              <button name="action" value="reject" class="btn btn-ghost btn-sm">✗</button>
+            </form>
+          </div>
+        {% endfor %}
+        <div style="padding:12px 16px;">
+          <a href="{% url 'organizers:staff_requests' %}" style="font-size:0.8125rem;color:var(--color-brand);">View all requests →</a>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:32px;">
+          <div class="empty-icon">👥</div>
+          <h3>No pending requests</h3>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- ACTIVE STAFF -->
+    {% if staff_members %}
+    <div class="data-section">
+      <div class="data-section-header">
+        <h3 class="data-section-title">Active Staff</h3>
+      </div>
+      {% for member in staff_members %}
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-color);">
+          <div class="avatar avatar-sm">{{ member.user.display_name|first }}</div>
+          <div>
+            <div style="font-size:0.875rem;font-weight:600;">{{ member.user.display_name }}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Since {{ member.joined_at|date:"M j, Y" }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

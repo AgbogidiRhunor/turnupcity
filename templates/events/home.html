@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Discover Events{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); padding: 80px 0 60px; color: white; text-align: center;">
+  <div class="container">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(108,71,255,0.3);border:1px solid rgba(108,71,255,0.5);border-radius:999px;padding:6px 16px;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#c4b5fd;margin-bottom:24px;">
+      🎉 Find events happening near you
+    </div>
+    <h1 style="color:white;font-size:clamp(2.5rem,6vw,4rem);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px;">
+      Turn Up &amp; Live<br>
+      <span style="background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Your Best Moments</span>
+    </h1>
+    <p style="color:rgba(255,255,255,0.7);font-size:1.125rem;max-width:520px;margin:0 auto 40px;">
+      Discover concerts, festivals, workshops, and more. Buy tickets instantly. Check in effortlessly.
+    </p>
+
+    <!-- SEARCH BAR -->
+    <form method="get" action="{% url 'events:list' %}" style="max-width:640px;margin:0 auto;">
+      <div style="display:flex;gap:8px;background:white;border-radius:16px;padding:8px 8px 8px 20px;box-shadow:0 20px 40px rgba(0,0,0,0.3);">
+        <input
+          type="text"
+          name="q"
+          value="{{ search_query }}"
+          placeholder="Search events, venues, cities..."
+          style="flex:1;border:none;outline:none;font-size:0.9375rem;color:#111827;background:transparent;"
+        >
+        <button type="submit" class="btn btn-primary" style="border-radius:10px;">
+          🔍 Search
+        </button>
+      </div>
+    </form>
+
+    <!-- QUICK FILTERS -->
+    {% if categories %}
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:24px;">
+      <a href="{% url 'events:list' %}" class="chip {% if not request.GET.category %}active{% endif %}" style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);">All Events</a>
+      {% for cat in categories %}
+        <a href="{% url 'events:list' %}?category={{ cat.slug }}" class="chip" style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);background:{% if request.GET.category == cat.slug %}rgba(108,71,255,0.5){% else %}rgba(255,255,255,0.1){% endif %};">
+          {{ cat.icon }} {{ cat.name }}
+        </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div style="background:white;border-bottom:1px solid var(--border-color);padding:20px 0;">
+  <div class="container" style="display:flex;justify-content:center;gap:48px;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <div style="font-size:1.5rem;font-weight:800;color:var(--color-brand);">{{ events.paginator.count|default:"0" }}+</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Events Listed</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:1.5rem;font-weight:800;color:var(--color-brand);">100%</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Secure Checkout</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:1.5rem;font-weight:800;color:var(--color-brand);">Instant</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">QR Tickets</div>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT LISTING -->
+<section class="section">
+  <div class="container">
+
+    <!-- Filter row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
+      <div>
+        <h2 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.3px;">
+          {% if search_query %}
+            Results for "{{ search_query }}"
+          {% elif selected_city %}
+            Events in {{ selected_city }}
+          {% else %}
+            Upcoming Events
+          {% endif %}
+        </h2>
+        <p style="margin:4px 0 0;font-size:0.875rem;color:var(--text-muted);">
+          {{ events.paginator.count }} event{{ events.paginator.count|pluralize }} found
+        </p>
+      </div>
+      <form method="get" action="{% url 'events:list' %}" style="display:flex;gap:8px;align-items:center;">
+        {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+        <input type="text" name="city" value="{{ selected_city }}" placeholder="Filter by city..." class="form-input" style="width:180px;">
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+      </form>
+    </div>
+
+    <!-- Events Grid -->
+    {% if events %}
+      <div class="grid-3" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+        {% for event in events %}
+          <a href="{% url 'events:detail' slug=event.slug %}" class="event-card" style="text-decoration:none;">
+            <div class="event-card-image">
+              {% if event.banner %}
+                <img src="{{ event.banner.url }}" alt="{{ event.title }}" loading="lazy">
+              {% else %}
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,#{{ event.pk|stringformat:'06x'|slice:':6' }}22,#6c47ff33);display:flex;align-items:center;justify-content:center;font-size:3rem;">
+                  🎪
+                </div>
+              {% endif %}
+              <div class="event-card-badge">
+                {% if event.status == 'published' %}
+                  <span class="badge badge-success">● Live</span>
+                {% elif event.status == 'cancelled' %}
+                  <span class="badge badge-danger">Cancelled</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="event-card-body">
+              {% if event.category %}
+                <div class="event-card-category">{{ event.category.icon }} {{ event.category.name }}</div>
+              {% endif %}
+              <div class="event-card-title">{{ event.title }}</div>
+              <div class="event-card-meta">
+                <div class="event-card-meta-item">
+                  📅 {{ event.start_date|date:"D, M j, Y" }}
+                </div>
+                <div class="event-card-meta-item">
+                  📍 {{ event.venue_name }}, {{ event.city }}
+                </div>
+                <div class="event-card-meta-item">
+                  👤 {{ event.organizer.organization_name }}
+                </div>
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <div class="event-price">
+                {% with event.ticket_types.all as tts %}
+                  {% if tts %}
+                    {% with tts|first as cheapest %}
+                      {% if cheapest.price == 0 %}
+                        <span class="event-price-free">Free</span>
+                      {% else %}
+                        From ${{ cheapest.price }}
+                      {% endif %}
+                    {% endwith %}
+                  {% else %}
+                    <span class="text-muted">TBA</span>
+                  {% endif %}
+                {% endwith %}
+              </div>
+              <span class="btn btn-primary btn-sm">Get Tickets</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      <!-- PAGINATION -->
+      {% if events.has_other_pages %}
+        <nav class="pagination" aria-label="Event pagination">
+          {% if events.has_previous %}
+            <a href="?page={{ events.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" class="page-btn" aria-label="Previous">‹</a>
+          {% endif %}
+          {% for num in events.paginator.page_range %}
+            {% if events.number == num %}
+              <span class="page-btn active">{{ num }}</span>
+            {% elif num > events.number|add:'-3' and num < events.number|add:'3' %}
+              <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}" class="page-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if events.has_next %}
+            <a href="?page={{ events.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" class="page-btn" aria-label="Next">›</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No events found</h3>
+        <p>
+          {% if search_query %}
+            We couldn't find any events matching "{{ search_query }}". Try a different search.
+          {% else %}
+            There are no upcoming events right now. Check back soon!
+          {% endif %}
+        </p>
+        {% if search_query %}
+          <a href="{% url 'events:list' %}" class="btn btn-primary">Browse All Events</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- CTA — BECOME ORGANIZER -->
+{% if not user.is_authenticated or not user.is_organizer %}
+<section style="background:linear-gradient(135deg,#6c47ff,#9b5eff);padding:60px 0;text-align:center;color:white;">
+  <div class="container container-md">
+    <h2 style="color:white;font-size:2rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:12px;">Ready to host your own event?</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:1.125rem;margin-bottom:32px;">
+      Create events, sell tickets, manage check-ins, and grow your audience with TurnUpCity.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'organizers:setup' %}" class="btn btn-dark btn-lg">🚀 Start for Free</a>
+      <a href="{% url 'events:list' %}" class="btn btn-lg" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3);">Browse Events</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

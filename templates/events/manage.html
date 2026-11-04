@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Manage: {{ event.title }}{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:40px;padding-bottom:60px;">
+  <div class="breadcrumb">
+    <a href="{% url 'organizers:dashboard' %}">Dashboard</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Manage Event</span>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
+    <div>
+      <h1 style="font-size:1.75rem;font-weight:800;letter-spacing:-0.3px;">{{ event.title }}</h1>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        {% if event.status == 'published' %}<span class="badge badge-success">● Published</span>
+        {% elif event.status == 'draft' %}<span class="badge badge-warning">Draft</span>
+        {% elif event.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+        <span class="badge badge-gray">{{ event.start_date|date:"M j, Y" }}</span>
+        <span class="badge badge-gray">📍 {{ event.city }}</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <a href="{% url 'events:detail' slug=event.slug %}" target="_blank" class="btn btn-secondary">🔗 View Public Page</a>
+      <a href="{% url 'events:edit' slug=event.slug %}" class="btn btn-secondary">✏️ Edit</a>
+      {% if event.status == 'draft' %}
+        <form method="post" action="{% url 'events:publish' slug=event.slug %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">🚀 Publish</button>
+        </form>
+      {% elif event.status == 'published' %}
+        <form method="post" action="{% url 'events:cancel' slug=event.slug %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" data-confirm="Cancel this event? Attendees will be notified.">Cancel Event</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid" style="margin-bottom:32px;">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-icon stat-icon-brand">🎫</div>
+      </div>
+      <div class="stat-card-label">Tickets Sold</div>
+      <div class="stat-card-value">{{ event.tickets_sold }}</div>
+      <div class="stat-card-change">of {{ event.capacity|default:"∞" }} capacity</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-icon stat-icon-success">✅</div>
+      </div>
+      <div class="stat-card-label">Checked In</div>
+      <div class="stat-card-value">{{ event.attendance_percentage }}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-icon stat-icon-warning">📦</div>
+      </div>
+      <div class="stat-card-label">Ticket Types</div>
+      <div class="stat-card-value">{{ ticket_types.count }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-icon stat-icon-info">🎟</div>
+      </div>
+      <div class="stat-card-label">Coupons</div>
+      <div class="stat-card-value">{{ coupons.count }}</div>
+    </div>
+  </div>
+
+  <div class="two-col-layout">
+    <div>
+      <!-- TICKET TYPES -->
+      <div class="data-section" style="margin-bottom:24px;">
+        <div class="data-section-header">
+          <h3 class="data-section-title">🎫 Ticket Types</h3>
+          <a href="{% url 'tickets:add_type' event_slug=event.slug %}" class="btn btn-primary btn-sm">+ Add Ticket Type</a>
+        </div>
+        {% if ticket_types %}
+          <div class="table-wrapper" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr>
+                <th>Name</th><th>Price</th><th>Qty</th><th>Sold</th><th>Status</th><th>Action</th>
+              </tr></thead>
+              <tbody>
+                {% for tt in ticket_types %}
+                <tr>
+                  <td>
+                    <div style="font-weight:600;">{{ tt.name }}</div>
+                    {% if tt.description %}<div style="font-size:0.75rem;color:var(--text-muted);">{{ tt.description|truncatewords:8 }}</div>{% endif %}
+                  </td>
+                  <td>${{ tt.price }}</td>
+                  <td>{{ tt.quantity }}</td>
+                  <td>{{ tt.quantity|add:"-"|add:tt.available_quantity }}</td>
+                  <td>
+                    {% if tt.is_sold_out %}<span class="badge badge-danger">Sold Out</span>
+                    {% elif tt.is_on_sale %}<span class="badge badge-success">On Sale</span>
+                    {% else %}<span class="badge badge-gray">Inactive</span>{% endif %}
+                  </td>
+                  <td><a href="{% url 'tickets:edit_type' pk=tt.pk %}" class="btn btn-ghost btn-sm">Edit</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state" style="padding:40px;">
+            <div class="empty-icon">🎫</div>
+            <h3>No ticket types yet</h3>
+            <p>Add ticket types to start selling tickets for this event.</p>
+            <a href="{% url 'tickets:add_type' event_slug=event.slug %}" class="btn btn-primary">+ Add First Ticket Type</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- COUPONS -->
+      <div class="data-section">
+        <div class="data-section-header">
+          <h3 class="data-section-title">🏷 Coupons</h3>
+          <a href="{% url 'events:add_coupon' slug=event.slug %}" class="btn btn-secondary btn-sm">+ Add Coupon</a>
+        </div>
+        {% if coupons %}
+          <div class="table-wrapper" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Used</th><th>Valid Until</th><th>Active</th></tr></thead>
+              <tbody>
+                {% for c in coupons %}
+                <tr>
+                  <td><code style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:0.8125rem;">{{ c.code }}</code></td>
+                  <td>{{ c.get_discount_type_display }}</td>
+                  <td>{% if c.discount_type == 'percent' %}{{ c.discount_value }}%{% else %}${{ c.discount_value }}{% endif %}</td>
+                  <td>{{ c.used_count }}{% if c.max_uses %}/{{ c.max_uses }}{% endif %}</td>
+                  <td>{{ c.valid_until|date:"M j, Y" }}</td>
+                  <td>{% if c.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-gray">Off</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state" style="padding:32px;">
+            <div class="empty-icon">🏷</div>
+            <h3>No coupons</h3>
+            <p>Create discount codes for your attendees.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      <!-- QUICK ACTIONS -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><h3>Quick Actions</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <a href="{% url 'checkin:scanner' event_slug=event.slug %}" class="btn btn-primary btn-full">📷 Open Check-In Scanner</a>
+          <a href="{% url 'analytics:event_detail' event_slug=event.slug %}" class="btn btn-secondary btn-full">📊 View Analytics</a>
+          <a href="{% url 'analytics:export_csv' event_slug=event.slug %}" class="btn btn-secondary btn-full">⬇ Export Attendees CSV</a>
+          <a href="{% url 'analytics:broadcast' event_slug=event.slug %}" class="btn btn-secondary btn-full">📧 Broadcast Email</a>
+          <a href="{% url 'orders:organizer_orders' %}" class="btn btn-ghost btn-full">📦 View All Orders</a>
+        </div>
+      </div>
+
+      <!-- EVENT DETAILS SUMMARY -->
+      <div class="card">
+        <div class="card-header"><h3>Event Details</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">📅 Start:</span> <strong>{{ event.start_date|date:"M j, Y g:i A" }}</strong></div>
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">📅 End:</span> <strong>{{ event.end_date|date:"M j, Y g:i A" }}</strong></div>
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">📍 Venue:</span> <strong>{{ event.venue_name }}</strong></div>
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">🏙 City:</span> <strong>{{ event.city }}</strong></div>
+          {% if event.refund_deadline %}
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">💸 Refund By:</span> <strong>{{ event.refund_deadline|date:"M j, Y" }}</strong></div>
+          {% endif %}
+          {% if event.capacity %}
+          <div style="font-size:0.875rem;"><span style="color:var(--text-muted);">👥 Capacity:</span> <strong>{{ event.capacity }}</strong></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

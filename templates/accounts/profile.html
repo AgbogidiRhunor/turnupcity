@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="container container-md" style="padding-top:40px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:28px;">Account Settings</h1>
+  <div class="two-col-layout reverse">
+    <!-- Avatar panel -->
+    <div>
+      <div class="card" style="text-align:center;">
+        <div class="card-body card-body-lg">
+          <div class="avatar avatar-2xl" style="margin:0 auto 16px;">
+            {% if user.avatar %}
+              <img src="{{ user.avatar.url }}" alt="{{ user.display_name }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+            {% else %}
+              {{ user.display_name|first|upper }}
+            {% endif %}
+          </div>
+          <h3 style="font-size:1.125rem;font-weight:700;">{{ user.display_name }}</h3>
+          <p style="color:var(--text-muted);font-size:0.875rem;">{{ user.email }}</p>
+          <span class="badge badge-brand" style="margin-top:8px;">{{ user.get_role_display }}</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+          <a href="{% url 'accounts:my_tickets' %}" class="btn btn-secondary btn-full">🎟 My Tickets</a>
+          <a href="{% url 'orders:my_orders' %}" class="btn btn-secondary btn-full">📦 My Orders</a>
+          <a href="{% url 'refunds:my_refunds' %}" class="btn btn-secondary btn-full">💸 My Refunds</a>
+          {% if user.is_organizer %}
+            <a href="{% url 'organizers:dashboard' %}" class="btn btn-primary btn-full">📋 Organizer Dashboard</a>
+          {% else %}
+            <a href="{% url 'organizers:setup' %}" class="btn btn-outline-brand btn-full">🚀 Become an Organizer</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Form -->
+    <div class="card">
+      <div class="card-header"><h3>Edit Profile</h3></div>
+      <div class="card-body card-body-lg">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="form-group">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="form-error">{{ field.errors.0 }}</div>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

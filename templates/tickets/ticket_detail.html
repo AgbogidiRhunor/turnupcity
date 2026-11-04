@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Ticket — {{ ticket.ticket_type.event.title }}{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));background:var(--gray-50);display:flex;align-items:center;justify-content:center;padding:40px 16px;">
+  <div style="width:100%;max-width:440px;">
+
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="{% url 'accounts:my_tickets' %}" style="font-size:0.875rem;color:var(--text-muted);">← Back to My Tickets</a>
+    </div>
+
+    <div class="ticket-card">
+      <!-- Header -->
+      <div class="ticket-card-header">
+        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.6);margin-bottom:6px;">
+          📅 {{ ticket.ticket_type.event.start_date|date:"l, F j, Y · g:i A" }}
+        </div>
+        <div class="ticket-card-event-title">{{ ticket.ticket_type.event.title }}</div>
+        <div class="ticket-card-event-meta">📍 {{ ticket.ticket_type.event.venue_name }}, {{ ticket.ticket_type.event.city }}</div>
+      </div>
+
+      <!-- Body -->
+      <div class="ticket-card-body">
+        <div>
+          <div class="ticket-info-row">
+            <span class="ticket-info-label">Ticket Type</span>
+            <span class="ticket-info-value">{{ ticket.ticket_type.name }}</span>
+          </div>
+          <div class="ticket-info-row">
+            <span class="ticket-info-label">Attendee</span>
+            <span class="ticket-info-value">{{ ticket.attendee_name }}</span>
+          </div>
+          <div class="ticket-info-row">
+            <span class="ticket-info-label">Email</span>
+            <span class="ticket-info-value" style="font-size:0.8125rem;">{{ ticket.attendee_email }}</span>
+          </div>
+          <div class="ticket-info-row">
+            <span class="ticket-info-label">Order #</span>
+            <span class="ticket-info-value">{{ ticket.order.order_number }}</span>
+          </div>
+          <div class="ticket-info-row">
+            <span class="ticket-info-label">Status</span>
+            <span class="ticket-info-value">
+              {% if ticket.status == 'valid' %}<span class="badge badge-success">✓ Valid</span>
+              {% elif ticket.status == 'used' %}<span class="badge badge-gray">✓ Used</span>
+              {% elif ticket.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>
+              {% elif ticket.status == 'refunded' %}<span class="badge badge-warning">Refunded</span>{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- QR CODE -->
+        <div style="text-align:center;">
+          <div class="ticket-qr-container">
+            {% if ticket.qr_code %}
+              <img src="{{ ticket.qr_code.url }}" alt="QR Code for ticket {{ ticket.uuid }}" width="160" height="160">
+            {% else %}
+              <div style="width:160px;height:160px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;">No QR</div>
+            {% endif %}
+          </div>
+          <div style="font-size:0.625rem;color:var(--text-muted);margin-top:8px;font-family:monospace;letter-spacing:0.05em;">{{ ticket.uuid }}</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="ticket-card-footer">
+        <div style="font-size:0.75rem;color:var(--text-muted);">
+          Issued {{ ticket.created_at|date:"M j, Y" }}
+        </div>
+        <div style="display:flex;gap:8px;">
+          {% if ticket.qr_code %}
+            <a href="{{ ticket.qr_code.url }}" download="ticket-{{ ticket.uuid }}.png" class="btn btn-secondary btn-sm">⬇ Save QR</a>
+          {% endif %}
+          {% if ticket.status == 'valid' and ticket.ticket_type.event.refund_eligible %}
+            <a href="{% url 'refunds:request' order_pk=ticket.order.pk %}" class="btn btn-ghost btn-sm">Request Refund</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;">
+      <p style="font-size:0.8125rem;color:var(--text-muted);">Present this QR code at the venue entrance. Keep it safe and do not share it.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

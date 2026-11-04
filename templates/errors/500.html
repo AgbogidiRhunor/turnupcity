@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Server Error{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 16px;">
+  <div>
+    <div style="font-size:6rem;line-height:1;margin-bottom:24px;">⚡</div>
+    <h1 style="font-size:5rem;font-weight:900;color:var(--gray-200);letter-spacing:-4px;line-height:1;">500</h1>
+    <h2 style="font-size:1.5rem;font-weight:700;margin-top:8px;">Something Went Wrong</h2>
+    <p style="color:var(--text-muted);margin:12px auto 32px;max-width:400px;">We're experiencing a server issue. Our team has been notified. Please try again shortly.</p>
+    <a href="/" class="btn btn-primary btn-lg">🏠 Go Home</a>
+  </div>
+</div>
+{% endblock %}

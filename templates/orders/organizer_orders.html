@@ -1,0 +1,50 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Orders{% endblock %}
+{% block nav_orders %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">Orders</h1>
+    <p class="dashboard-page-subtitle">All orders for your events</p>
+  </div>
+</div>
+<div class="data-section">
+  {% if orders %}
+    <div class="table-wrapper" style="border:none;">
+      <table class="table">
+        <thead><tr>
+          <th>Order #</th><th>Customer</th><th>Event</th><th>Total</th><th>Status</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td><span style="font-family:monospace;font-weight:600;font-size:0.8125rem;">{{ order.order_number }}</span></td>
+            <td>
+              <div style="font-weight:600;font-size:0.875rem;">{{ order.user.display_name }}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">{{ order.user.email }}</div>
+            </td>
+            <td>
+              <a href="{% url 'events:manage' slug=order.event.slug %}" style="font-size:0.875rem;">{{ order.event.title|truncatewords:4 }}</a>
+            </td>
+            <td style="font-weight:700;">${{ order.total_amount }}</td>
+            <td>
+              {% if order.status == 'paid' %}<span class="badge badge-success">Paid</span>
+              {% elif order.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+              {% elif order.status == 'refunded' %}<span class="badge badge-gray">Refunded</span>
+              {% elif order.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+            </td>
+            <td style="color:var(--text-muted);font-size:0.8125rem;">{{ order.created_at|date:"M j, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:60px;">
+      <div class="empty-icon">📦</div>
+      <h3>No orders yet</h3>
+      <p>Orders will appear here once attendees start purchasing tickets.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

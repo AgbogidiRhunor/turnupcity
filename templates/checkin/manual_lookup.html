@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Manual Ticket Lookup{% endblock %}
+{% block content %}
+<div class="container container-md" style="padding-top:40px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:28px;">Manual Ticket Lookup</h1>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-body">
+      <form method="get" style="display:flex;gap:8px;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by UUID, email or name..." class="form-input" style="flex:1;" autofocus>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+    </div>
+  </div>
+  {% if tickets %}
+    <div class="data-section">
+      <div class="table-wrapper" style="border:none;">
+        <table class="table">
+          <thead><tr><th>UUID</th><th>Event</th><th>Attendee</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for ticket in tickets %}
+            <tr>
+              <td style="font-family:monospace;font-size:0.75rem;">{{ ticket.uuid }}</td>
+              <td style="font-size:0.875rem;">{{ ticket.ticket_type.event.title|truncatewords:4 }}</td>
+              <td>
+                <div style="font-weight:600;font-size:0.875rem;">{{ ticket.attendee_name }}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">{{ ticket.attendee_email }}</div>
+              </td>
+              <td>
+                {% if ticket.status == 'valid' %}<span class="badge badge-success">Valid</span>
+                {% elif ticket.status == 'used' %}<span class="badge badge-gray">Used</span>
+                {% else %}<span class="badge badge-danger">{{ ticket.get_status_display }}</span>{% endif %}
+              </td>
+              <td><a href="{% url 'tickets:detail' uuid=ticket.uuid %}" class="btn btn-ghost btn-sm">View →</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% elif query %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>No tickets found</h3>
+      <p>No tickets match "{{ query }}"</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{% block meta_description %}TurnUpCity — Discover and manage events in your city.{% endblock %}">
+  <title>{% block title %}TurnUpCity{% endblock %} | TurnUpCity</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  {% block extra_css %}{% endblock %}
+  <style>:root { --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }</style>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<div class="page-wrapper">
+
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="{% url 'home' %}" class="navbar-brand">
+        <div class="navbar-logo-mark">TU</div>
+        <span class="navbar-logo-text">TurnUpCity</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="{% url 'events:list' %}" class="nav-link">Events</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:my_tickets' %}" class="nav-link">My Tickets</a>
+          {% if user.role == 'organizer' or user.role == 'admin' or user.is_superuser %}
+            <a href="{% url 'organizers:dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'analytics:dashboard' %}" class="nav-link">Analytics</a>
+          {% endif %}
+          {% if user.role == 'organizer' or user.role == 'staff' or user.role == 'admin' or user.is_superuser %}
+            <a href="{% url 'checkin:select_event' %}" class="nav-link">Check-In</a>
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="navbar-right">
+        {% if user.is_authenticated %}
+          <div class="user-menu">
+            <button class="user-avatar-btn" aria-haspopup="true" aria-expanded="false">
+              <div class="user-avatar">
+                {% if user.avatar %}
+                  <img src="{{ user.avatar.url }}" alt="{{ user.display_name }}">
+                {% else %}
+                  {{ user.display_name|first|upper }}
+                {% endif %}
+              </div>
+              <span class="user-name-preview">{{ user.display_name }}</span>
+              <span class="chevron-icon">&#9660;</span>
+            </button>
+            <div class="user-dropdown" role="menu">
+              <div class="dropdown-header">
+                <div class="dropdown-user-name">{{ user.display_name }}</div>
+                <div class="dropdown-user-email">{{ user.email }}</div>
+              </div>
+              <a href="{% url 'accounts:profile' %}" class="dropdown-item" role="menuitem">Profile</a>
+              <a href="{% url 'accounts:my_tickets' %}" class="dropdown-item" role="menuitem">My Tickets</a>
+              <a href="{% url 'orders:my_orders' %}" class="dropdown-item" role="menuitem">My Orders</a>
+              <a href="{% url 'messaging:inbox' %}" class="dropdown-item" role="menuitem">Messages</a>
+              <hr class="dropdown-divider">
+              {% if user.role == 'guest' %}
+                <a href="{% url 'organizers:setup' %}" class="dropdown-item" role="menuitem">Become Organizer</a>
+                <hr class="dropdown-divider">
+              {% endif %}
+              <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item danger" role="menuitem">Sign Out</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm">Log in</a>
+          <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-sm">Sign up</a>
+        {% endif %}
+        <button class="hamburger" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mobile-nav" role="navigation" aria-label="Mobile navigation">
+    <a href="{% url 'events:list' %}" class="mobile-nav-link">Browse Events</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'accounts:my_tickets' %}" class="mobile-nav-link">My Tickets</a>
+      <a href="{% url 'orders:my_orders' %}" class="mobile-nav-link">My Orders</a>
+      <a href="{% url 'messaging:inbox' %}" class="mobile-nav-link">Messages</a>
+      {% if user.role == 'organizer' or user.role == 'staff' or user.role == 'admin' or user.is_superuser %}
+        <a href="{% url 'checkin:select_event' %}" class="mobile-nav-link">Check-In</a>
+      {% endif %}
+      {% if user.role == 'organizer' or user.role == 'admin' or user.is_superuser %}
+        <a href="{% url 'organizers:dashboard' %}" class="mobile-nav-link">Organizer Dashboard</a>
+        <a href="{% url 'analytics:dashboard' %}" class="mobile-nav-link">Analytics</a>
+      {% endif %}
+      <hr class="divider">
+      <a href="{% url 'accounts:profile' %}" class="mobile-nav-link">Profile</a>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="mobile-nav-link" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;font-size:inherit;">Sign Out</button>
+      </form>
+    {% else %}
+      <a href="{% url 'accounts:login' %}" class="mobile-nav-link">Log in</a>
+      <a href="{% url 'accounts:signup' %}" class="mobile-nav-link">Sign up free</a>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    <div class="messages-container" style="position:fixed;top:calc(var(--nav-height) + 16px);right:16px;z-index:9998;display:flex;flex-direction:column;gap:8px;max-width:380px;width:calc(100% - 32px);">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %}" role="alert">
+          <span>{{ message }}</span>
+          <button class="alert-close" aria-label="Close">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="main-content" id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="navbar-brand" style="margin-bottom:12px;">
+            <div class="navbar-logo-mark">TU</div>
+            <span class="navbar-logo-text">TurnUpCity</span>
+          </div>
+          <p>The community event platform for organizers, attendees, and everyone in between.</p>
+        </div>
+        <div>
+          <h4 class="footer-section-title">Discover</h4>
+          <div class="footer-links">
+            <a href="{% url 'events:list' %}">Browse Events</a>
+            <a href="{% url 'events:list' %}?category=music">Music</a>
+            <a href="{% url 'events:list' %}?category=sports">Sports</a>
+            <a href="{% url 'events:list' %}?category=arts">Arts &amp; Culture</a>
+          </div>
+        </div>
+        <div>
+          <h4 class="footer-section-title">Organize</h4>
+          <div class="footer-links">
+            <a href="{% url 'organizers:setup' %}">Create Events</a>
+            {% if user.is_authenticated and user.role == 'organizer' %}
+              <a href="{% url 'organizers:dashboard' %}">Dashboard</a>
+              <a href="{% url 'analytics:dashboard' %}">Analytics</a>
+            {% endif %}
+            <a href="{% url 'checkin:select_event' %}">Check-In Tool</a>
+          </div>
+        </div>
+        <div>
+          <h4 class="footer-section-title">Account</h4>
+          <div class="footer-links">
+            {% if user.is_authenticated %}
+              <a href="{% url 'accounts:profile' %}">Profile</a>
+              <a href="{% url 'accounts:my_tickets' %}">My Tickets</a>
+              <a href="{% url 'orders:my_orders' %}">My Orders</a>
+              <a href="{% url 'messaging:inbox' %}">Messages</a>
+            {% else %}
+              <a href="{% url 'accounts:signup' %}">Sign up free</a>
+              <a href="{% url 'accounts:login' %}">Log in</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; {% now "Y" %} TurnUpCity. All rights reserved.</p>
+        <p>Built with love for communities everywhere.</p>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

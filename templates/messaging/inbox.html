@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:40px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:32px;">💬 Messages</h1>
+  {% if threads %}
+    <div class="data-section">
+      {% for thread in threads %}
+        <a href="{% url 'messaging:thread' pk=thread.pk %}" style="text-decoration:none;display:block;">
+          <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--border-color);transition:var(--transition-fast);" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+            <div class="avatar avatar-md">
+              {% if user.organizer_profile == thread.organizer %}
+                {{ thread.participant.display_name|first }}
+              {% else %}
+                {{ thread.organizer.organization_name|first }}
+              {% endif %}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.9375rem;">
+                {% if user.organizer_profile == thread.organizer %}
+                  {{ thread.participant.display_name }}
+                {% else %}
+                  {{ thread.organizer.organization_name }}
+                {% endif %}
+              </div>
+              {% if thread.last_message %}
+                <div style="font-size:0.8125rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;margin-top:2px;">
+                  {{ thread.last_message.body|truncatewords:10 }}
+                </div>
+              {% endif %}
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">{{ thread.updated_at|date:"M j" }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <h3>No messages yet</h3>
+      <p>You can message organizers from their profile pages.</p>
+      <a href="{% url 'events:list' %}" class="btn btn-primary">Browse Events</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

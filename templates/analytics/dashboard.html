@@ -1,0 +1,89 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Analytics{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">Analytics</h1>
+    <p class="dashboard-page-subtitle">Performance overview for all your events</p>
+  </div>
+</div>
+
+<!-- TOTALS -->
+<div class="stats-grid" style="margin-bottom:32px;">
+  <div class="stat-card">
+    <div class="stat-card-icon stat-icon-success">💰</div>
+    <div class="stat-card-label">Total Revenue</div>
+    <div class="stat-card-value">${{ total_revenue|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon stat-icon-brand">🎫</div>
+    <div class="stat-card-label">Total Tickets Sold</div>
+    <div class="stat-card-value">{{ total_tickets }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon stat-icon-info">✅</div>
+    <div class="stat-card-label">Total Check-Ins</div>
+    <div class="stat-card-value">{{ total_checkins }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon stat-icon-warning">🎪</div>
+    <div class="stat-card-label">Events</div>
+    <div class="stat-card-value">{{ event_stats|length }}</div>
+  </div>
+</div>
+
+<!-- PER-EVENT TABLE -->
+<div class="data-section">
+  <div class="data-section-header">
+    <h3 class="data-section-title">Event Performance</h3>
+  </div>
+  {% if event_stats %}
+    <div class="table-wrapper" style="border:none;">
+      <table class="table">
+        <thead><tr>
+          <th>Event</th><th>Date</th><th>Tickets Sold</th><th>Revenue</th><th>Check-ins</th><th>Attendance</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for stat in event_stats %}
+          <tr>
+            <td>
+              <a href="{% url 'events:manage' slug=stat.event.slug %}" style="font-weight:600;font-size:0.9rem;">{{ stat.event.title|truncatewords:5 }}</a>
+              <div>
+                {% if stat.event.status == 'published' %}<span class="badge badge-success" style="font-size:0.65rem;">Live</span>
+                {% elif stat.event.status == 'draft' %}<span class="badge badge-warning" style="font-size:0.65rem;">Draft</span>
+                {% elif stat.event.status == 'cancelled' %}<span class="badge badge-danger" style="font-size:0.65rem;">Cancelled</span>{% endif %}
+              </div>
+            </td>
+            <td style="font-size:0.8rem;color:var(--text-muted);">{{ stat.event.start_date|date:"M j, Y" }}</td>
+            <td style="font-weight:700;">{{ stat.tickets_sold }}</td>
+            <td style="font-weight:700;color:var(--color-success);">${{ stat.revenue|floatformat:0 }}</td>
+            <td>{{ stat.checked_in }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="progress-bar-wrapper" style="width:80px;">
+                  <div class="progress-bar-fill {% if stat.attendance_pct > 80 %}success{% elif stat.attendance_pct > 50 %}{% else %}{% endif %}" style="width:{{ stat.attendance_pct|floatformat:0 }}%;"></div>
+                </div>
+                <span style="font-size:0.8125rem;font-weight:600;">{{ stat.attendance_pct|floatformat:0 }}%</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <a href="{% url 'analytics:event_detail' event_slug=stat.event.slug %}" class="btn btn-ghost btn-sm">Details</a>
+                <a href="{% url 'analytics:export_csv' event_slug=stat.event.slug %}" class="btn btn-ghost btn-sm">⬇ CSV</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:60px;">
+      <div class="empty-icon">📊</div>
+      <h3>No data yet</h3>
+      <p>Create events and sell tickets to see analytics here.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

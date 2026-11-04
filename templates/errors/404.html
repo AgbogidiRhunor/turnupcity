@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Page Not Found{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 16px;">
+  <div>
+    <div style="font-size:6rem;line-height:1;margin-bottom:24px;">🔍</div>
+    <h1 style="font-size:5rem;font-weight:900;color:var(--gray-200);letter-spacing:-4px;line-height:1;">404</h1>
+    <h2 style="font-size:1.5rem;font-weight:700;margin-top:8px;">Page Not Found</h2>
+    <p style="color:var(--text-muted);margin:12px auto 32px;max-width:400px;">The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="/" class="btn btn-primary btn-lg">🏠 Go Home</a>
+      <a href="/events/" class="btn btn-secondary btn-lg">Browse Events</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

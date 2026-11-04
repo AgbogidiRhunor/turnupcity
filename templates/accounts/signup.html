@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--gray-50);">
+  <div style="width:100%;max-width:460px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--color-brand),#9b5eff);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-weight:800;font-size:1.25rem;color:white;">TU</div>
+      <h1 style="font-size:1.75rem;font-weight:800;letter-spacing:-0.3px;">Create your account</h1>
+      <p style="color:var(--text-muted);margin-top:8px;">Join thousands discovering events on TurnUpCity</p>
+    </div>
+    <div class="card">
+      <div class="card-body card-body-lg">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">I am a...</label>
+            {{ form.role }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}<div class="form-error">{{ form.password1.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="form-error">{{ form.password2.errors.0 }}</div>{% endif %}
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">Create Account →</button>
+        </form>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:20px;font-size:0.875rem;color:var(--text-muted);">
+      Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

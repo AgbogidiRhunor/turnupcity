@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Message Thread{% endblock %}
+{% block content %}
+<div class="container container-md" style="padding-top:40px;padding-bottom:60px;">
+  <div class="breadcrumb">
+    <a href="{% url 'messaging:inbox' %}">Messages</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>{{ thread.organizer.organization_name }}</span>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3>{{ thread.organizer.organization_name }}</h3>
+        <div style="font-size:0.75rem;color:var(--text-muted);">with {{ thread.participant.display_name }}</div>
+      </div>
+    </div>
+    <!-- Messages -->
+    <div style="padding:20px;max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;" id="messages-container">
+      {% for msg in thread.messages.all %}
+        <div style="display:flex;{% if msg.sender == user %}justify-content:flex-end;{% endif %}">
+          <div style="max-width:70%;background:{% if msg.sender == user %}var(--color-brand);color:white;{% else %}var(--gray-100);color:var(--text-primary);{% endif %};padding:12px 16px;border-radius:{% if msg.sender == user %}16px 16px 4px 16px;{% else %}16px 16px 16px 4px;{% endif %};">
+            <div style="font-size:0.875rem;line-height:1.5;">{{ msg.body }}</div>
+            <div style="font-size:0.7rem;margin-top:4px;opacity:0.7;">{{ msg.created_at|date:"g:i A" }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div style="text-align:center;color:var(--text-muted);padding:40px;font-size:0.875rem;">Start the conversation</div>
+      {% endfor %}
+    </div>
+    <!-- Reply form -->
+    <div class="card-footer">
+      <form method="post" style="display:flex;gap:8px;">
+        {% csrf_token %}
+        <textarea name="body" placeholder="Write a message..." class="form-input" rows="2" style="flex:1;resize:none;" required></textarea>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-end;">Send</button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  // Auto-scroll to bottom
+  var container = document.getElementById('messages-container');
+  if (container) container.scrollTop = container.scrollHeight;
+</script>
+{% endblock %}

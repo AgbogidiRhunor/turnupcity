@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Request to Work — {{ organizer.organization_name }}{% endblock %}
+{% block content %}
+<div class="container container-sm" style="padding-top:60px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:8px;">Apply as Staff</h1>
+  <p style="color:var(--text-muted);margin-bottom:32px;">Send a request to work for <strong>{{ organizer.organization_name }}</strong></p>
+  <div class="card">
+    <div class="card-body card-body-lg">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Your Message (optional)</label>
+          {{ form.message }}
+          <div class="form-hint">Tell the organizer about your experience and why you'd like to help.</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <button type="submit" class="btn btn-primary">Send Request</button>
+          <a href="{% url 'organizers:public_profile' slug=organizer.slug %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

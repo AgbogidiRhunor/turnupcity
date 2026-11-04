@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Add Ticket Type{% endblock %}
+{% block content %}
+<div class="container container-sm" style="padding-top:40px;padding-bottom:60px;">
+  <div class="breadcrumb">
+    <a href="{% url 'events:manage' slug=event.slug %}">{{ event.title|truncatewords:4 }}</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Add Ticket Type</span>
+  </div>
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:28px;">Add Ticket Type</h1>
+  <div class="card">
+    <div class="card-body card-body-lg">
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="form-group">
+            <label class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            {% if field.errors %}<div class="form-error">{{ field.errors.0 }}</div>{% endif %}
+            {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+            {% if field.name == 'is_active' %}
+              <div class="form-hint" style="color:var(--color-success);font-weight:600;">&#10003; Make sure this is checked for the ticket to appear on the event page.</div>
+            {% endif %}
+            {% if field.name == 'quantity' %}
+              <div class="form-hint" style="color:var(--color-warning);">&#9888; Must be greater than 0 for tickets to show as available. Use 0 for unlimited.</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button type="submit" class="btn btn-primary">Create Ticket Type</button>
+          <a href="{% url 'events:manage' slug=event.slug %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

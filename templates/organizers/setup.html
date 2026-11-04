@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Become an Organizer{% endblock %}
+{% block content %}
+<div class="container container-md" style="padding-top:60px;padding-bottom:60px;">
+  <div style="text-align:center;margin-bottom:48px;">
+    <div style="font-size:3rem;margin-bottom:16px;">🚀</div>
+    <h1 style="font-size:2.25rem;font-weight:800;letter-spacing:-0.5px;">Create Your Organizer Profile</h1>
+    <p style="color:var(--text-muted);font-size:1.125rem;margin-top:12px;max-width:480px;margin-left:auto;margin-right:auto;">
+      Set up your profile to start creating events, selling tickets, and building your community.
+    </p>
+  </div>
+  <div class="card" style="max-width:600px;margin:0 auto;">
+    <div class="card-body card-body-lg">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+          <div class="form-group">
+            <label class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            {% if field.errors %}<div class="form-error">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top:8px;">Create Organizer Profile →</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

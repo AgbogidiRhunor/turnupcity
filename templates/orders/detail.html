@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block content %}
+<div class="container container-md" style="padding-top:40px;padding-bottom:60px;">
+  <div class="breadcrumb">
+    <a href="{% url 'orders:my_orders' %}">My Orders</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>{{ order.order_number }}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
+    <div>
+      <h1 style="font-size:1.75rem;font-weight:800;">Order {{ order.order_number }}</h1>
+      <p style="color:var(--text-muted);margin-top:4px;">Placed {{ order.created_at|date:"F j, Y" }}</p>
+    </div>
+    {% if order.status == 'paid' %}<span class="badge badge-success" style="font-size:0.875rem;padding:8px 16px;">✓ Paid</span>
+    {% elif order.status == 'pending' %}<span class="badge badge-warning" style="font-size:0.875rem;padding:8px 16px;">Pending</span>
+    {% elif order.status == 'refunded' %}<span class="badge badge-gray" style="font-size:0.875rem;padding:8px 16px;">Refunded</span>{% endif %}
+  </div>
+
+  <div class="two-col-layout">
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h3>Tickets</h3></div>
+        {% for ticket in tickets %}
+          <a href="{% url 'tickets:detail' uuid=ticket.uuid %}" style="text-decoration:none;display:block;">
+            <div class="event-list-item">
+              {% if ticket.qr_code %}
+                <div class="event-list-thumbnail"><img src="{{ ticket.qr_code.url }}" alt="QR"></div>
+              {% endif %}
+              <div class="event-list-info">
+                <div class="event-list-title">{{ ticket.ticket_type.name }}</div>
+                <div class="event-list-meta">{{ ticket.attendee_name }} · {{ ticket.attendee_email }}</div>
+              </div>
+              {% if ticket.status == 'valid' %}<span class="badge badge-success">Valid</span>
+              {% elif ticket.status == 'used' %}<span class="badge badge-gray">Used</span>
+              {% elif ticket.status == 'refunded' %}<span class="badge badge-warning">Refunded</span>{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="order-summary">
+        <h3 class="order-summary-title">Order Summary</h3>
+        {% for item in order.items.all %}
+          <div class="order-line">
+            <span>{{ item.ticket_type.name }} × {{ item.quantity }}</span>
+            <span>${{ item.total_price }}</span>
+          </div>
+        {% endfor %}
+        <hr class="order-line-divider">
+        {% if order.discount_amount > 0 %}
+          <div class="order-line" style="color:var(--color-success);">
+            <span>Discount</span><span>-${{ order.discount_amount }}</span>
+          </div>
+        {% endif %}
+        <div class="order-total">
+          <span>Total</span><span>${{ order.total_amount }}</span>
+        </div>
+        {% if order.status == 'paid' and order.event.refund_eligible %}
+          <a href="{% url 'refunds:request' order_pk=order.pk %}" class="btn btn-secondary btn-full" style="margin-top:16px;">Request Refund</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

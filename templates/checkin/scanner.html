@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Check-In Scanner — {{ event.title }}{% endblock %}
+{% block extra_css %}
+<style>
+  body { background: #0a0a0a; }
+  .scanner-page { min-height: calc(100vh - var(--nav-height)); background: #0a0a0a; color: white; padding: 24px 16px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="scanner-page">
+  <div class="container container-lg">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 style="color:white;font-size:1.5rem;font-weight:800;">📷 Check-In Scanner</h1>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;margin-top:4px;">{{ event.title }} · {{ event.start_date|date:"M j, Y" }}</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="gate-input" placeholder="Gate / Entry point" class="form-input" style="width:160px;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:white;">
+        <a href="{% url 'checkin:select_event' %}" class="btn btn-secondary btn-sm">← Back</a>
+      </div>
+    </div>
+
+    <input type="hidden" id="event-slug" value="{{ event.slug }}">
+    {% csrf_token %}
+
+    <div style="display:grid;grid-template-columns:1fr;gap:24px;" class="scanner-grid">
+
+      <!-- SCANNER COL -->
+      <div>
+        <!-- Camera -->
+        <div style="background:#111;border-radius:20px;padding:24px;margin-bottom:16px;">
+          <div class="scanner-viewport" id="scanner-viewport">
+            <video id="scanner-video" autoplay muted playsinline></video>
+            <canvas id="scanner-canvas" style="display:none;"></canvas>
+            <div class="scanner-overlay">
+              <div class="scanner-frame" id="scanner-frame">
+                <div class="scanner-frame-corner-tl"></div>
+                <div class="scanner-frame-corner-br"></div>
+                <div class="scanner-line" id="scanner-line"></div>
+              </div>
+            </div>
+            <div class="scanner-hint" id="scanner-hint">Tap "Start Scanner" to begin</div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+            <button id="start-scanner-btn" class="btn btn-primary btn-lg">▶ Start Scanner</button>
+            <button id="stop-scanner-btn" class="btn btn-secondary btn-lg" style="display:none;">⏹ Stop</button>
+          </div>
+        </div>
+
+        <!-- Scan Result -->
+        <div id="scan-result" style="display:none;"></div>
+
+        <!-- Manual Lookup -->
+        <div style="background:#111;border-radius:16px;padding:20px;margin-top:16px;">
+          <h3 style="color:white;font-size:1rem;font-weight:600;margin-bottom:12px;">🔍 Manual Lookup</h3>
+          <form id="manual-scan-form" style="display:flex;gap:8px;">
+            {% csrf_token %}
+            <input type="text" id="manual-ticket-input" placeholder="Paste ticket UUID or scan manually..." class="form-input" style="flex:1;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white;">
+            <button type="submit" class="btn btn-primary">Check In</button>
+          </form>
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:8px;">Enter ticket UUID directly or use the camera above.</p>
+        </div>
+      </div>
+
+      <!-- SCAN HISTORY -->
+      <div>
+        <div style="background:#111;border-radius:16px;padding:20px;">
+          <h3 style="color:white;font-size:1rem;font-weight:600;margin-bottom:16px;">📋 Scan History</h3>
+          <div id="scan-history-list">
+            <!-- From server -->
+            {% if recent_scans %}
+              {% for scan in recent_scans %}
+                <div class="scan-entry" style="border-color:rgba(255,255,255,0.08);">
+                  <div class="scan-status-dot {% if scan.success %}success{% else %}error{% endif %}"></div>
+                  <div class="scan-entry-attendee" style="color:rgba(255,255,255,0.9);">{{ scan.ticket.attendee_name|default:"Unknown" }}</div>
+                  <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);flex:1;margin-left:8px;">{{ scan.ticket.ticket_type.name }}</div>
+                  <div class="scan-entry-time" style="color:rgba(255,255,255,0.4);">{{ scan.scanned_at|date:"g:i A" }}</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="scan-history-empty" style="color:rgba(255,255,255,0.3);font-size:0.875rem;text-align:center;padding:24px 0;">No scans yet. Start scanning tickets above.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="background:#111;border-radius:16px;padding:20px;margin-top:16px;">
+          <h3 style="color:white;font-size:1rem;font-weight:600;margin-bottom:16px;">📊 Event Stats</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.75rem;font-weight:800;color:var(--color-success);">{{ event.tickets_sold }}</div>
+              <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px;">Tickets Sold</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.75rem;font-weight:800;color:var(--color-brand);">{{ recent_scans|length }}</div>
+              <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px;">Checked In</div>
+            </div>
+          </div>
+          {% if event.capacity %}
+            <div style="margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:6px;">
+                <span>Capacity</span><span>{{ event.attendance_percentage }}%</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.1);border-radius:999px;height:8px;overflow:hidden;">
+                <div style="background:linear-gradient(90deg,var(--color-brand),#9b5eff);height:100%;width:{{ event.attendance_percentage }}%;border-radius:999px;"></div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.scanner-grid { grid-template-columns: 1fr; }
+@media (min-width: 1024px) { .scanner-grid { grid-template-columns: 1fr 340px; } }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script src="{% static 'js/scanner.js' %}"></script>
+{% endblock %}

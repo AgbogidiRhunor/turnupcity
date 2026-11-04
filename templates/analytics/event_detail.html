@@ -1,0 +1,83 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Analytics — {{ event.title }}{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">{{ event.title }}</h1>
+    <p class="dashboard-page-subtitle">Detailed analytics and attendee data</p>
+  </div>
+  <div class="btn-group">
+    <a href="{% url 'analytics:export_csv' event_slug=event.slug %}" class="btn btn-secondary">⬇ Export CSV</a>
+    <a href="{% url 'analytics:broadcast' event_slug=event.slug %}" class="btn btn-primary">📧 Broadcast</a>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:32px;">
+  {% for stat in tickets_by_type %}
+    <div class="stat-card">
+      <div class="stat-card-label">{{ stat.ticket_type__name }}</div>
+      <div class="stat-card-value">{{ stat.count }}</div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- RECENT ORDERS -->
+<div class="data-section" style="margin-bottom:24px;">
+  <div class="data-section-header">
+    <h3 class="data-section-title">Recent Orders</h3>
+  </div>
+  {% if recent_orders %}
+    <div class="table-wrapper" style="border:none;">
+      <table class="table">
+        <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td style="font-family:monospace;font-size:0.8125rem;font-weight:600;">{{ order.order_number }}</td>
+            <td style="font-size:0.875rem;">{{ order.user.display_name }}</td>
+            <td style="font-weight:700;">${{ order.total_amount }}</td>
+            <td>
+              {% if order.status == 'paid' %}<span class="badge badge-success">Paid</span>
+              {% elif order.status == 'refunded' %}<span class="badge badge-gray">Refunded</span>
+              {% else %}<span class="badge badge-warning">{{ order.get_status_display }}</span>{% endif %}
+            </td>
+            <td style="color:var(--text-muted);font-size:0.8125rem;">{{ order.created_at|date:"M j, Y g:i A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">📦</div><h3>No orders yet</h3></div>
+  {% endif %}
+</div>
+
+<!-- SCAN LOGS -->
+<div class="data-section">
+  <div class="data-section-header">
+    <h3 class="data-section-title">Recent Scan Activity</h3>
+  </div>
+  {% if scan_logs %}
+    <div class="table-wrapper" style="border:none;">
+      <table class="table">
+        <thead><tr><th>Attendee</th><th>Ticket Type</th><th>Scanned By</th><th>Gate</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody>
+          {% for log in scan_logs %}
+          <tr>
+            <td style="font-weight:600;font-size:0.875rem;">{{ log.ticket.attendee_name }}</td>
+            <td style="font-size:0.875rem;">{{ log.ticket.ticket_type.name }}</td>
+            <td style="font-size:0.8125rem;color:var(--text-muted);">{{ log.scanned_by.display_name|default:"—" }}</td>
+            <td style="font-size:0.8125rem;color:var(--text-muted);">{{ log.gate|default:"—" }}</td>
+            <td>{% if log.success %}<span class="badge badge-success">✓</span>{% else %}<span class="badge badge-danger">✗</span>{% endif %}</td>
+            <td style="font-size:0.8125rem;color:var(--text-muted);">{{ log.scanned_at|date:"M j g:i A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">📷</div><h3>No scans yet</h3></div>
+  {% endif %}
+</div>
+{% endblock %}

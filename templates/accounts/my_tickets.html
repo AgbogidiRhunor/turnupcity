@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}My Tickets{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:40px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:8px;">My Tickets</h1>
+  <p style="color:var(--text-muted);margin-bottom:32px;">Your purchased tickets and QR codes</p>
+
+  {% if tickets %}
+    <div class="grid-2" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr));">
+      {% for ticket in tickets %}
+        <a href="{% url 'tickets:detail' uuid=ticket.uuid %}" style="text-decoration:none;">
+          <div class="ticket-card card-hover" style="cursor:pointer;">
+            <div class="ticket-card-header">
+              <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.6);margin-bottom:4px;">
+                {{ ticket.ticket_type.event.start_date|date:"D, M j, Y" }}
+              </div>
+              <div class="ticket-card-event-title">{{ ticket.ticket_type.event.title }}</div>
+              <div class="ticket-card-event-meta">{{ ticket.ticket_type.name }} · {{ ticket.ticket_type.event.venue_name }}</div>
+            </div>
+            <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Attendee</div>
+                <div style="font-weight:600;font-size:0.9375rem;">{{ ticket.attendee_name }}</div>
+              </div>
+              <div>
+                {% if ticket.status == 'valid' %}<span class="badge badge-success">✓ Valid</span>
+                {% elif ticket.status == 'used' %}<span class="badge badge-gray">Used</span>
+                {% elif ticket.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>
+                {% elif ticket.status == 'refunded' %}<span class="badge badge-warning">Refunded</span>{% endif %}
+              </div>
+            </div>
+            <div class="ticket-card-footer">
+              <div style="font-size:0.75rem;color:var(--text-muted);">Order: {{ ticket.order.order_number }}</div>
+              <span style="font-size:0.8125rem;color:var(--color-brand);font-weight:600;">View QR →</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🎟</div>
+      <h3>No tickets yet</h3>
+      <p>Browse events and buy your first ticket!</p>
+      <a href="{% url 'events:list' %}" class="btn btn-primary">Browse Events</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Broadcast Email{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">📧 Broadcast Email</h1>
+    <p class="dashboard-page-subtitle">Send a message to all paid attendees of {{ event.title }}</p>
+  </div>
+</div>
+<div class="card" style="max-width:640px;">
+  <div class="card-body card-body-lg">
+    <div class="alert alert-info" style="margin-bottom:24px;">
+      ℹ️ This email will be sent to all attendees who have a <strong>paid</strong> order for this event.
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Subject *</label>
+        <input type="text" name="subject" class="form-input" placeholder="Important update about your tickets..." required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message *</label>
+        <textarea name="message" class="form-input" rows="10" placeholder="Write your message to attendees..." required></textarea>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button type="submit" class="btn btn-primary">📤 Send to All Attendees</button>
+        <a href="{% url 'analytics:event_detail' event_slug=event.slug %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

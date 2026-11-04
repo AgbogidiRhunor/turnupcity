@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Select Event — Check-In{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:40px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:8px;">📷 Check-In Scanner</h1>
+  <p style="color:var(--text-muted);margin-bottom:32px;">Select an event to start checking in attendees</p>
+  {% if events %}
+    <div class="grid-3" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+      {% for event in events %}
+        <a href="{% url 'checkin:scanner' event_slug=event.slug %}" style="text-decoration:none;">
+          <div class="card card-hover" style="overflow:hidden;">
+            {% if event.banner %}
+              <img src="{{ event.banner.url }}" alt="{{ event.title }}" style="width:100%;height:120px;object-fit:cover;">
+            {% else %}
+              <div style="height:80px;background:linear-gradient(135deg,var(--color-brand-light),#e9d5ff);"></div>
+            {% endif %}
+            <div class="card-body card-body-sm">
+              <div style="font-weight:700;font-size:0.9375rem;">{{ event.title }}</div>
+              <div style="font-size:0.8125rem;color:var(--text-muted);margin-top:4px;">{{ event.start_date|date:"M j, Y · g:i A" }}</div>
+              <div style="font-size:0.8125rem;color:var(--text-muted);">📍 {{ event.venue_name }}</div>
+              <div style="margin-top:12px;">
+                <span class="btn btn-primary btn-sm btn-full">Open Scanner →</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📷</div>
+      <h3>No events to check in</h3>
+      <p>You don't have any active events or staff assignments.</p>
+      {% if user.is_organizer %}
+        <a href="{% url 'events:create' %}" class="btn btn-primary">Create an Event</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

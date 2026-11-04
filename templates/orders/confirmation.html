@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Order Confirmed!{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));background:var(--gray-50);padding:60px 16px;text-align:center;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="width:80px;height:80px;background:var(--color-success-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:2.5rem;border:3px solid var(--color-success);">
+      ✅
+    </div>
+    <h1 style="font-size:2rem;font-weight:800;letter-spacing:-0.5px;">You're going!</h1>
+    <p style="color:var(--text-muted);font-size:1.125rem;margin-top:8px;margin-bottom:32px;">
+      Your order is confirmed. Tickets are ready below.
+    </p>
+
+    <div class="card" style="text-align:left;margin-bottom:24px;">
+      <div class="card-header">
+        <h3>Order #{{ order.order_number }}</h3>
+        <span class="badge badge-success">Paid</span>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Event</div>
+            <div style="font-weight:600;">{{ order.event.title }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Date</div>
+            <div style="font-weight:600;">{{ order.event.start_date|date:"M j, Y" }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Total Paid</div>
+            <div style="font-weight:700;color:var(--color-brand);font-size:1.125rem;">${{ order.total_amount }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Tickets</div>
+            <div style="font-weight:600;">{{ tickets.count }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="font-size:1.25rem;font-weight:700;text-align:left;margin-bottom:16px;">Your Tickets</h2>
+    {% for ticket in tickets %}
+      <a href="{% url 'tickets:detail' uuid=ticket.uuid %}" style="text-decoration:none;display:block;margin-bottom:12px;">
+        <div class="card card-hover" style="padding:16px 20px;display:flex;align-items:center;gap:16px;">
+          {% if ticket.qr_code %}
+            <img src="{{ ticket.qr_code.url }}" alt="QR" style="width:60px;height:60px;border-radius:8px;border:1px solid var(--border-color);">
+          {% endif %}
+          <div style="flex:1;">
+            <div style="font-weight:700;">{{ ticket.ticket_type.name }}</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">{{ ticket.attendee_name }}</div>
+          </div>
+          <span class="badge badge-success">Valid</span>
+        </div>
+      </a>
+    {% endfor %}
+
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;">
+      <a href="{% url 'accounts:my_tickets' %}" class="btn btn-primary btn-lg">View All Tickets</a>
+      <a href="{% url 'events:list' %}" class="btn btn-secondary btn-lg">Browse More Events</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Withdrawals{% endblock %}
+{% block nav_withdrawals %}active{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">💳 Withdrawals</h1>
+    <p class="dashboard-page-subtitle">Manage your earnings and withdraw to your bank account</p>
+  </div>
+  <a href="{% url 'organizers:setup_bank_account' %}" class="btn btn-secondary">
+    {% if bank_account %}✏️ Update Bank Account{% else %}➕ Add Bank Account{% endif %}
+  </a>
+</div>
+
+<!-- BALANCE CARDS -->
+<div class="stats-grid" style="margin-bottom:32px;">
+  <div class="stat-card" style="border-left:4px solid var(--color-success);">
+    <div class="stat-card-label">Total Earned</div>
+    <div class="stat-card-value" style="color:var(--color-success);">₦{{ total_earned|floatformat:2 }}</div>
+    <div class="stat-card-change">From all paid orders</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--color-brand);">
+    <div class="stat-card-label">Available Balance</div>
+    <div class="stat-card-value" style="color:var(--color-brand);">₦{{ available_balance|floatformat:2 }}</div>
+    <div class="stat-card-change">Ready to withdraw</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--color-warning);">
+    <div class="stat-card-label">Processing</div>
+    <div class="stat-card-value" style="color:var(--color-warning);">₦{{ total_pending|floatformat:2 }}</div>
+    <div class="stat-card-change">In transit</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--gray-400);">
+    <div class="stat-card-label">Total Withdrawn</div>
+    <div class="stat-card-value">₦{{ total_withdrawn|floatformat:2 }}</div>
+    <div class="stat-card-change">All time</div>
+  </div>
+</div>
+
+<div class="two-col-layout">
+  <!-- LEFT: Withdraw Form -->
+  <div>
+    <!-- BANK ACCOUNT STATUS -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <h3>🏦 Bank Account</h3>
+      </div>
+      <div class="card-body">
+        {% if bank_account and bank_account.is_verified %}
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:48px;height:48px;background:var(--color-success-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">🏦</div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:1rem;">{{ bank_account.account_name }}</div>
+              <div style="color:var(--text-muted);font-size:0.875rem;">{{ bank_account.bank_name }}</div>
+              <div style="color:var(--text-muted);font-size:0.875rem;">****{{ bank_account.account_number|slice:"-4:" }}</div>
+            </div>
+            <span class="badge badge-success">✓ Verified</span>
+          </div>
+        {% else %}
+          <div class="empty-state" style="padding:24px;">
+            <div class="empty-icon">🏦</div>
+            <h3>No bank account</h3>
+            <p>Add your bank account to start withdrawing your earnings.</p>
+            <a href="{% url 'organizers:setup_bank_account' %}" class="btn btn-primary">Add Bank Account</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- WITHDRAWAL FORM -->
+    {% if bank_account and bank_account.is_verified and available_balance > 0 %}
+    <div class="card">
+      <div class="card-header"><h3>💸 Withdraw Funds</h3></div>
+      <div class="card-body card-body-lg">
+        <form method="post" action="{% url 'organizers:request_withdrawal' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Amount (₦) *</label>
+            <div style="position:relative;">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--text-muted);">₦</span>
+              <input type="number" name="amount" class="form-input" style="padding-left:32px;"
+                min="100" max="{{ available_balance }}" step="0.01"
+                placeholder="Enter amount (min ₦100)" required>
+            </div>
+            <div class="form-hint">Available: ₦{{ available_balance|floatformat:2 }}</div>
+          </div>
+          <div style="background:var(--gray-50);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px;font-size:0.8125rem;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Destination</span>
+              <span style="font-weight:600;">{{ bank_account.account_name }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="color:var(--text-muted);">Bank</span>
+              <span>{{ bank_account.bank_name }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="color:var(--text-muted);">Account</span>
+              <span>****{{ bank_account.account_number|slice:"-4:" }}</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg"
+            onclick="return confirm('Confirm withdrawal to {{ bank_account.account_name }}?')">
+            Withdraw Now →
+          </button>
+          <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:10px;">
+            Powered by Paystack · Funds arrive within minutes
+          </p>
+        </form>
+      </div>
+    </div>
+    {% elif bank_account and bank_account.is_verified and available_balance <= 0 %}
+      <div class="alert alert-info">You have no available balance to withdraw yet.</div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Withdrawal History -->
+  <div>
+    <div class="data-section">
+      <div class="data-section-header">
+        <h3 class="data-section-title">Withdrawal History</h3>
+      </div>
+      {% if withdrawals %}
+        <div class="table-wrapper" style="border:none;">
+          <table class="table">
+            <thead><tr>
+              <th>Amount</th><th>Status</th><th>Reference</th><th>Date</th>
+            </tr></thead>
+            <tbody>
+              {% for w in withdrawals %}
+              <tr>
+                <td style="font-weight:700;">₦{{ w.amount|floatformat:2 }}</td>
+                <td>
+                  {% if w.status == 'completed' %}<span class="badge badge-success">Completed</span>
+                  {% elif w.status == 'processing' %}<span class="badge badge-warning">Processing</span>
+                  {% elif w.status == 'failed' %}<span class="badge badge-danger">Failed</span>
+                  {% elif w.status == 'pending' %}<span class="badge badge-gray">Pending</span>
+                  {% else %}<span class="badge badge-gray">{{ w.get_status_display }}</span>{% endif %}
+                </td>
+                <td style="font-family:monospace;font-size:0.75rem;color:var(--text-muted);">{{ w.paystack_reference }}</td>
+                <td style="font-size:0.8125rem;color:var(--text-muted);">{{ w.requested_at|date:"M j, Y g:i A" }}</td>
+              </tr>
+              {% if w.status == 'failed' and w.failure_reason %}
+              <tr>
+                <td colspan="4" style="padding-top:0;">
+                  <div style="font-size:0.75rem;color:var(--color-danger);padding:4px 0;">⚠ {{ w.failure_reason }}</div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:48px;">
+          <div class="empty-icon">💳</div>
+          <h3>No withdrawals yet</h3>
+          <p>Your withdrawal history will appear here.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

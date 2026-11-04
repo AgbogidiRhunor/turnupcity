@@ -1,0 +1,60 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Refund Requests{% endblock %}
+{% block nav_refunds %}active{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-page-header">
+  <div>
+    <h1 class="dashboard-page-title">Refund Requests</h1>
+    <p class="dashboard-page-subtitle">Review and process refund requests from attendees</p>
+  </div>
+</div>
+<div class="data-section">
+  {% if refunds %}
+    {% for refund in refunds %}
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border-color);">
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <div style="font-weight:700;font-size:0.9375rem;">{{ refund.requested_by.display_name }}</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">{{ refund.requested_by.email }}</div>
+            <div style="margin-top:8px;font-size:0.875rem;color:var(--text-secondary);">
+              <strong>{{ refund.order.event.title }}</strong> · Order {{ refund.order.order_number }}
+            </div>
+            <div style="margin-top:6px;font-size:0.8125rem;font-style:italic;color:var(--text-muted);">"{{ refund.reason|truncatewords:20 }}"</div>
+            <div style="margin-top:6px;font-size:0.75rem;color:var(--text-muted);">Submitted {{ refund.created_at|date:"M j, Y" }}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:1.25rem;font-weight:800;color:var(--text-primary);margin-bottom:8px;">${{ refund.refund_amount }}</div>
+            {% if refund.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+            {% elif refund.status == 'approved' %}<span class="badge badge-success">Approved</span>
+            {% elif refund.status == 'rejected' %}<span class="badge badge-danger">Rejected</span>{% endif %}
+          </div>
+        </div>
+        {% if refund.status == 'pending' %}
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+            <form method="post" action="{% url 'refunds:process' pk=refund.pk %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <textarea name="notes" placeholder="Optional notes to attendee..." class="form-input" rows="2" style="font-size:0.875rem;"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button name="action" value="approve" class="btn btn-success btn-sm">✓ Approve Refund</button>
+                <button name="action" value="reject" class="btn btn-secondary btn-sm">✗ Reject</button>
+              </div>
+            </form>
+          </div>
+        {% elif refund.reviewer_notes %}
+          <div style="margin-top:12px;font-size:0.8125rem;color:var(--text-muted);">
+            <strong>Note:</strong> {{ refund.reviewer_notes }}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:60px;">
+      <div class="empty-icon">💸</div>
+      <h3>No refund requests</h3>
+      <p>Refund requests from attendees will appear here.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

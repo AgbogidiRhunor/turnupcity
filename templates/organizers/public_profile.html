@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{{ organizer.organization_name }}{% endblock %}
+{% block content %}
+<!-- HEADER -->
+<div style="background:linear-gradient(135deg,#111827,#1f1635);padding:60px 0 40px;color:white;">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <div class="avatar avatar-xl">
+        {% if organizer.logo %}
+          <img src="{{ organizer.logo.url }}" alt="{{ organizer.organization_name }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+        {% else %}
+          {{ organizer.organization_name|first }}
+        {% endif %}
+      </div>
+      <div style="flex:1;">
+        <h1 style="color:white;font-size:2rem;font-weight:800;letter-spacing:-0.3px;">{{ organizer.organization_name }}</h1>
+        {% if organizer.is_verified %}
+          <span class="badge badge-success" style="margin-top:8px;">✓ Verified Organizer</span>
+        {% endif %}
+        {% if organizer.description %}
+          <p style="color:rgba(255,255,255,0.7);margin-top:12px;max-width:560px;">{{ organizer.description }}</p>
+        {% endif %}
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+          {% if organizer.website %}
+            <a href="{{ organizer.website }}" target="_blank" rel="noopener" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.2);">🌐 Website</a>
+          {% endif %}
+          {% if organizer.twitter %}
+            <a href="https://twitter.com/{{ organizer.twitter|cut:'@' }}" target="_blank" rel="noopener" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.2);">🐦 Twitter</a>
+          {% endif %}
+          {% if user.is_authenticated and user != organizer.user %}
+            <a href="{% url 'messaging:start' organizer_slug=organizer.slug %}" class="btn btn-primary btn-sm">💬 Message</a>
+            <a href="{% url 'organizers:request_to_work' slug=organizer.slug %}" class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3);">👷 Work With Us</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EVENTS -->
+<section class="section-sm">
+  <div class="container">
+    <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:24px;">Upcoming Events</h2>
+    {% if events %}
+      <div class="grid-3" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+        {% for event in events %}
+          <a href="{% url 'events:detail' slug=event.slug %}" class="event-card" style="text-decoration:none;">
+            <div class="event-card-image">
+              {% if event.banner %}
+                <img src="{{ event.banner.url }}" alt="{{ event.title }}" loading="lazy">
+              {% else %}
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,var(--color-brand-light),#e9d5ff);display:flex;align-items:center;justify-content:center;font-size:3rem;">🎪</div>
+              {% endif %}
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-title">{{ event.title }}</div>
+              <div class="event-card-meta">
+                <div class="event-card-meta-item">📅 {{ event.start_date|date:"M j, Y" }}</div>
+                <div class="event-card-meta-item">📍 {{ event.city }}</div>
+              </div>
+            </div>
+            <div class="event-card-footer">
+              <div class="event-price">
+                {% with event.ticket_types.all|first as cheapest %}
+                  {% if cheapest %}{% if cheapest.price == 0 %}<span class="event-price-free">Free</span>{% else %}From ${{ cheapest.price }}{% endif %}{% else %}TBA{% endif %}
+                {% endwith %}
+              </div>
+              <span class="badge badge-success">● On Sale</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🎪</div>
+        <h3>No upcoming events</h3>
+        <p>Check back later for new events from this organizer.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

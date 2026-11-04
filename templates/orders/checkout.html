@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Checkout — {{ event.title }}{% endblock %}
+{% block extra_css %}
+<style>
+  .checkout-page { background: var(--gray-50); min-height: calc(100vh - var(--nav-height)); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="checkout-page">
+  <div class="container" style="padding-top:40px;padding-bottom:60px;">
+    <div class="breadcrumb">
+      <a href="{% url 'events:detail' slug=event.slug %}">{{ event.title|truncatewords:4 }}</a>
+      <span class="breadcrumb-sep">/</span>
+      <span>Checkout</span>
+    </div>
+    <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:8px;">{{ event.title }}</h1>
+    <p style="color:var(--text-muted);margin-bottom:32px;">📅 {{ event.start_date|date:"l, F j, Y · g:i A" }} · 📍 {{ event.venue_name }}</p>
+
+    <div class="two-col-layout">
+      <!-- LEFT: Ticket Selection -->
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>Select Tickets</h3></div>
+          <div class="card-body card-body-lg">
+            <input type="hidden" id="event-id" value="{{ event.pk }}">
+            {% for tt in ticket_types %}
+              <div class="ticket-type-row" data-price="{{ tt.price }}" data-name="{{ tt.name }}" style="padding:20px 0;{% if not forloop.last %}border-bottom:1px solid var(--border-color);{% endif %}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:700;font-size:1rem;">{{ tt.name }}</div>
+                    {% if tt.description %}
+                      <div style="font-size:0.8125rem;color:var(--text-muted);margin-top:4px;">{{ tt.description }}</div>
+                    {% endif %}
+                    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                      {% if tt.sales_end %}
+                        <span style="font-size:0.75rem;color:var(--text-muted);">🕐 Sale ends {{ tt.sales_end|date:"M j, Y" }}</span>
+                      {% endif %}
+                      <span style="font-size:0.75rem;color:var(--text-muted);">Max {{ tt.max_per_order }} per order</span>
+                      <span style="font-size:0.75rem;color:{% if tt.available_quantity < 10 %}var(--color-danger){% else %}var(--text-muted){% endif %};">
+                        {{ tt.available_quantity }} available
+                      </span>
+                    </div>
+                  </div>
+                  <div style="text-align:right;flex-shrink:0;">
+                    <div style="font-size:1.25rem;font-weight:800;margin-bottom:12px;{% if tt.price == 0 %}color:var(--color-success);{% endif %}">
+                      {% if tt.price == 0 %}Free{% else %}${{ tt.price }}{% endif %}
+                    </div>
+                    {% if tt.is_sold_out %}
+                      <span class="badge badge-danger">Sold Out</span>
+                    {% elif not tt.is_on_sale %}
+                      <span class="badge badge-warning">Not Available</span>
+                    {% else %}
+                      <div class="qty-selector">
+                        <button type="button" class="qty-btn" data-qty="minus">−</button>
+                        <input type="number" name="qty_{{ tt.pk }}" class="qty-input" value="0" min="0" max="{{ tt.max_per_order }}">
+                        <button type="button" class="qty-btn" data-qty="plus">+</button>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Coupon -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header"><h3>🏷 Have a Coupon?</h3></div>
+          <div class="card-body">
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="coupon-input" placeholder="Enter code..." class="form-input" style="flex:1;">
+              <button type="button" id="coupon-apply-btn" class="btn btn-secondary">Apply</button>
+            </div>
+            <div id="coupon-message" class="form-hint" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Order Summary -->
+      <div>
+        <div class="order-summary">
+          <h3 class="order-summary-title">Order Summary</h3>
+          <div id="order-summary-lines">
+            <div class="order-line text-muted"><span>No tickets selected</span></div>
+          </div>
+          <hr class="order-line-divider">
+          <div class="order-line" style="font-size:0.875rem;color:var(--text-muted);">
+            <span>Subtotal</span><span id="order-subtotal">$0.00</span>
+          </div>
+          <div class="order-line" id="discount-row" style="display:none;color:var(--color-success);font-size:0.875rem;">
+            <span>🏷 Discount</span><span id="order-discount">-$0.00</span>
+          </div>
+          <div class="order-total">
+            <span>Total</span><span id="order-total" style="color:var(--color-brand);">$0.00</span>
+          </div>
+          <form method="post" action="{% url 'orders:checkout' event_slug=event.slug %}" id="checkout-form" style="margin-top:20px;">
+            {% csrf_token %}
+            <!-- Hidden qty inputs will be submitted -->
+            <button type="button" id="checkout-submit-btn" class="btn btn-primary btn-full btn-lg" disabled
+              onclick="document.getElementById('checkout-form').submit()">
+              Pay with Paystack →
+            </button>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:0.5;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.7rem;color:var(--text-muted);">Secured by Paystack · SSL encrypted</span>
+            </div>
+          </form>
+          {% if event.refund_deadline %}
+            <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:12px;">
+              🔒 Refunds available until {{ event.refund_deadline|date:"M j, Y" }}
+            </p>
+          {% endif %}
+        </div>
+
+        <!-- Event Summary -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-body card-body-sm">
+            {% if event.banner %}
+              <img src="{{ event.banner.url }}" alt="{{ event.title }}" style="width:100%;height:120px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:12px;">
+            {% endif %}
+            <div style="font-weight:700;font-size:0.9375rem;">{{ event.title }}</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);margin-top:4px;">{{ event.start_date|date:"l, F j · g:i A" }}</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">{{ event.venue_name }}, {{ event.city }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/checkout.js' %}"></script>
+<script>
+  // Paystack public key available for frontend use if needed
+  window.PAYSTACK_PUBLIC_KEY = "{{ PAYSTACK_PUBLIC_KEY }}";
+</script>
+{% endblock %}

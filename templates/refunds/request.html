@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Request Refund{% endblock %}
+{% block content %}
+<div class="container container-sm" style="padding-top:60px;padding-bottom:60px;">
+  <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:8px;">Request a Refund</h1>
+  <p style="color:var(--text-muted);margin-bottom:32px;">For order <strong>{{ order.order_number }}</strong> · {{ order.event.title }}</p>
+  <div class="card">
+    <div class="card-body card-body-lg">
+      <div style="background:var(--color-warning-bg);border:1px solid #fde68a;border-radius:var(--radius-lg);padding:16px;margin-bottom:24px;font-size:0.875rem;color:#92400e;">
+        ⚠️ Refunds are subject to organizer approval. Refund deadline: <strong>{{ order.event.refund_deadline|date:"F j, Y" }}</strong>
+      </div>
+      <div style="margin-bottom:24px;padding:16px;background:var(--gray-50);border-radius:var(--radius-lg);">
+        <div style="font-size:0.75rem;text-transform:uppercase;font-weight:600;color:var(--text-muted);margin-bottom:12px;">Order Summary</div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:4px;">
+          <span>{{ order.event.title }}</span><span style="font-weight:700;">${{ order.total_amount }}</span>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">{{ order.tickets.count }} ticket{{ order.tickets.count|pluralize }}</div>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Reason for Refund *</label>
+          <textarea name="reason" rows="5" class="form-input" placeholder="Please explain why you're requesting a refund..." required></textarea>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <button type="submit" class="btn btn-danger">Submit Refund Request</button>
+          <a href="{% url 'orders:detail' pk=order.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
